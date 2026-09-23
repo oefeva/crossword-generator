@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Генератор кроссвордов</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0f11; --panel:#16181b; --panel-2:#1e2125; --panel-3:#25292e; --line:#262a2f; --line-2:#33383f;
+  --text:#f3f3f0; --muted:#8e939b; --dim:#5f646c;
+  --accent:#FFDD2D; --accent-ink:#1c1800; --accent-soft:rgba(255,221,45,.12);
+  --err:#ff6b5b; --err-soft:rgba(255,107,91,.14);
+  --warn:#ffb547; --warn-soft:rgba(255,181,71,.14);
+  --ok:#6fd08c; --ok-soft:rgba(111,208,140,.12);
+  --sans:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:dark;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#0e0f11; } }
+:root[data-theme="dark"]{ --bg:#0e0f11; }
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+::selection{background:rgba(255,221,45,.3)}
+
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px}
+.top{display:flex;align-items:center;gap:14px;padding:26px 0 22px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:14px}
+.logo-mark{width:40px;height:40px;display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:4px;background:var(--accent);border-radius:10px;transform:rotate(-4deg)}
+.logo-mark i{background:var(--accent-ink);border-radius:2px}
+.logo-mark i.o{background:transparent}
+.logo h1{font-size:20px;font-weight:700;margin:0;letter-spacing:-.015em}
+.logo small{display:block;color:var(--muted);font-size:13.5px;margin-top:1px}
+.top .sp{flex:1}
+.status-pill{display:flex;align-items:center;gap:9px;height:38px;padding:0 14px;border-radius:10px;background:var(--panel);border:1px solid var(--line);font-size:14px;color:var(--text)}
+.status-pill b{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px var(--ok-soft)}
+.status-pill.bad b{background:var(--err);box-shadow:0 0 0 4px var(--err-soft)}
+.status-pill.meh b{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+
+.btn{border:0;border-radius:10px;height:38px;padding:0 16px;font-weight:600;font-size:14px;cursor:pointer;background:var(--panel-2);color:var(--text);transition:background .15s,transform .1s,color .15s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{background:var(--panel-3)}
+.btn:active{transform:translateY(1px)}
+.btn.y{background:var(--accent);color:var(--accent-ink)}
+.btn.y:hover{background:#ffe454}
+.btn.ghost{background:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--text);background:var(--panel-2)}
+.btn.sm{height:32px;padding:0 12px;font-size:13px;border-radius:8px}
+.btn svg{width:16px;height:16px;flex:none}
+
+.app{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;padding-bottom:40px;align-items:start}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+@media (max-width:900px){
+  .wrap{padding:0 14px}
+  .app{grid-template-columns:1fr}
+  .ed{height:60vh}
+}
+
+.panel{background:var(--panel);border:1px solid rgba(255,255,255,.04);border-radius:16px;padding:22px 22px 24px}
+.ph{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.ph .st{width:26px;height:26px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:13px;font-weight:700;flex:none}
+.ph h2{font-size:17px;font-weight:700;margin:0;letter-spacing:-.01em;flex:1}
+.ph .meta{color:var(--muted);font-size:13px}
+.below{display:flex;justify-content:flex-start;margin-top:12px}
+.ph+.field,.ph+.checks{margin-top:18px}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 18px 38px;max-width:60ch}
+
+.field{display:block;margin-bottom:16px}
+.field:last-child{margin-bottom:0}
+.field .lbl{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;color:var(--text);font-weight:500;margin-bottom:7px}
+.key{font-family:var(--mono);font-size:11px;color:var(--dim);background:var(--bg);border-radius:6px;padding:2px 7px;font-weight:400}
+.inp{width:100%;height:44px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:0 14px;font-size:15px;transition:border-color .15s,box-shadow .15s}
+.inp:hover{border-color:var(--line-2)}
+.inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.inp.mono{font-family:var(--mono);font-size:13px}
+.inp.bad{border-color:rgba(255,107,91,.7)}
+.inp::placeholder{color:var(--dim)}
+.note{font-size:12.5px;color:var(--ok);margin-top:6px;min-height:0}
+.note:empty{display:none}
+
+.ed{position:relative;display:grid;grid-template-columns:44px 1fr;background:linear-gradient(90deg,#121316 0 44px,var(--line) 44px 45px,var(--bg) 45px);border:1px solid var(--line);border-radius:12px;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.ed:hover{border-color:var(--line-2)}
+.ed:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.gutter{position:relative;font-family:var(--mono);font-size:11.5px;z-index:1}
+.gutter span{position:absolute;left:8px;width:26px;height:20px;border-radius:6px;display:grid;place-items:center;font-weight:600;color:var(--muted);background:var(--panel-2);transition:background .15s,color .15s}
+.gutter span.cur{color:var(--accent-ink);background:var(--accent)}
+.gutter span.warn{color:var(--warn);background:var(--warn-soft)}
+.gutter span.err{color:var(--err);background:var(--err-soft)}
+.gutter span.warn.cur{color:#1c1300;background:var(--warn)}
+.band{position:absolute;left:44px;right:0;background:rgba(255,255,255,.035);pointer-events:none;display:none}
+.ed:focus-within .band{display:block}
+.ed textarea,.mirror{font-family:var(--sans);font-size:14.5px;line-height:22px;padding:14px 16px;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;tab-size:4}
+.ed textarea{position:relative;width:100%;min-height:260px;border:0;background:transparent;resize:none;overflow:hidden;display:block;color:var(--text);caret-color:var(--accent)}
+.ed textarea:focus{outline:none}
+.ed textarea::placeholder{color:var(--dim)}
+.mirror{position:absolute;left:44px;right:0;top:0;visibility:hidden;pointer-events:none}
+.mirror div{min-height:22px}
+
+.cp{margin-top:20px;border-top:1px solid var(--line);padding-top:16px}
+.cp-head{display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
+.cp-head .t{flex:1}
+.cp-head .t b{display:block;font-size:14px;font-weight:600}
+.cp-head .t small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px}
+.switch{position:relative;width:38px;height:22px;flex:none}
+.switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.switch i{position:absolute;inset:0;border-radius:7px;background:var(--panel-3);transition:background .15s;pointer-events:none}
+.switch i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:5px;background:var(--muted);transition:transform .15s,background .15s}
+.switch input:checked+i{background:var(--accent)}
+.switch input:checked+i::after{transform:translateX(16px);background:var(--accent-ink)}
+.switch input:focus-visible+i{outline:2px solid var(--accent);outline-offset:2px}
+.cp-body{display:none;margin-top:16px}
+.cp.on .cp-body{display:block}
+.ta{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14.5px;line-height:1.5;resize:vertical;min-height:66px;transition:border-color .15s,box-shadow .15s}
+.ta:hover{border-color:var(--line-2)}
+.ta:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.ta[readonly]{color:var(--muted);background:#121316;cursor:default}
+.ta[readonly]:hover{border-color:var(--line)}
+.ta.mono{font-family:var(--mono);font-size:13.5px;min-height:44px;letter-spacing:.08em}
+.ta.bad,.inp.bad{border-color:rgba(255,107,91,.7)}
+.hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+.mask-row{display:flex;align-items:flex-start;gap:10px}
+.mask-row .ta{flex:1}
+.mprev{display:flex;flex-direction:column;gap:5px;margin-top:10px;padding:12px;border-radius:10px;background:var(--bg);border:1px dashed var(--line-2)}
+.mprev:empty{display:none}
+.mprev .ln{display:flex;flex-wrap:wrap;gap:4px}
+.mprev .c{width:22px;height:26px;border-radius:5px;display:grid;place-items:center;font-size:13px;font-weight:600}
+.mprev .c.s{border:1.5px solid var(--accent);background:var(--accent-soft)}
+.mprev .c.f{color:var(--muted);background:var(--panel-2)}
+.mprev .c.sp{width:10px}
+.checks{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.ck{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;min-height:44px;padding:8px 8px 8px 12px;border-radius:10px;background:var(--bg);font-size:13.5px;line-height:1.4}
+.ck .d{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:700}
+.ck.err .d{background:var(--err-soft);color:var(--err)}
+.ck.warn .d{background:var(--warn-soft);color:var(--warn)}
+.ck.ok .d{background:var(--ok-soft);color:var(--ok)}
+.ck .go{cursor:pointer;text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:3px}
+.ck .go:hover{text-decoration-color:var(--muted)}
+.ck .fix{border:0;height:28px;background:var(--panel-2);color:var(--accent);border-radius:8px;padding:0 11px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+.ck .fix:hover{background:var(--panel-3)}
+.codewrap{position:relative;background:var(--bg);border-radius:12px;border:1px solid var(--line)}
+.code{margin:0;padding:16px 18px;font-family:var(--mono);font-size:12.5px;line-height:1.65;overflow:auto;max-height:56vh;white-space:pre;color:#c9ccd2}
+.code .k{color:#9cc0ff} .code .s{color:#ead98f} .code .b{color:#ffa283} .code .p{color:#5f646c}
+.out-actions{display:flex;gap:8px;margin-top:14px}
+.out-actions .btn.y{flex:1;height:50px;font-size:15.5px;border-radius:12px}
+.out-actions .btn.y.done{background:var(--ok);color:#06200f}
+
+/* fixed-height editor; right column stretches so both columns end on one line */
+@media (min-width:901px){
+  .app{align-items:stretch}
+  .out-panel{height:100%;display:flex;flex-direction:column}
+  .out-panel .checks{flex:none;max-height:40%;overflow:auto}
+  .out-panel .codewrap{flex:1;min-height:160px;display:flex;contain:size}
+  .out-panel .code{flex:1;max-height:none}
+  .out-actions{flex:none}
+}
+.ed{height:460px}
+.ed{overflow:auto;grid-template-rows:minmax(100%,max-content)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);background:var(--panel-3);color:var(--text);border:1px solid var(--line-2);box-shadow:0 12px 32px rgba(0,0,0,.45);padding:11px 16px;border-radius:12px;font-weight:500;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10;max-width:calc(100% - 32px);text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast{display:flex;align-items:center;gap:14px}
+.toast .undo{border:0;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:13px;height:28px;padding:0 12px;border-radius:8px;cursor:pointer}
+.toast .undo:hover{background:#ffe454}
+.toast.err{border-color:rgba(255,107,91,.6)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="logo">
+    <div class="logo-mark" aria-hidden="true"><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i></div>
+    <h1>Генератор кроссвордов</h1>
+  </div>
+  <div class="sp"></div>
+  <div class="status-pill" id="pill"><b></b><span id="pillText">…</span></div>
+  <button class="btn ghost" id="resetBtn">Начать заново</button>
+</header>
+
+<main class="app">
+  <section class="col">
+    <div class="panel">
+      <div class="ph"><span class="st">1</span><h2>Основное</h2></div>
+      <label class="field"><div class="lbl">Заголовок <span class="key">uiText.header</span></div>
+        <input class="inp" id="f-header" autocomplete="off"></label>
+      <label class="field"><div class="lbl">Слаг <span class="key">crosswordName</span></div>
+        <input class="inp mono" id="f-slug" autocomplete="off" spellcheck="false"></label>
+      <label class="field"><div class="lbl">ID фичерной таблицы <span class="key">sheetId</span></div>
+        <input class="inp mono" id="f-sheet" autocomplete="off" spellcheck="false">
+        <div class="note" id="sheetNote"></div></label>
+
+      <div class="cp" id="cp">
+        <label class="cp-head">
+          <span class="t"><b>Кодовое слово</b></span>
+          <span class="switch"><input type="checkbox" id="cp-on" aria-label="Добавить кодовое слово"><i></i></span>
+        </label>
+        <div class="cp-body">
+          <label class="field"><div class="lbl">Промокод <span class="key">promo</span></div>
+            <input class="inp mono" id="cp-promo" autocomplete="off" spellcheck="false">
+            <div class="hint">Маска из звездочек по числу букв соберется сама</div></label>
+          <label class="field"><div class="lbl">Текст до разгадки <span class="key">caption</span></div>
+            <textarea class="ta" id="cp-caption" rows="2"></textarea></label>
+          <label class="field"><div class="lbl">Текст после разгадки <span class="key">solvedCaption</span></div>
+            <textarea class="ta" id="cp-solved" rows="3"></textarea></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><span class="st">2</span><h2>Вопросы</h2><span class="key">wordsListData</span></div>
+      <p class="sub">Скопируй список вопросов кроссворда из гуглодока. Номер слева — место вопроса в кроссворде. Цифры в начале строк, «По&nbsp;горизонтали», «По&nbsp;вертикали» в JSON не&nbsp;попадут</p>
+      <div class="ed" id="ed">
+        <div class="band" id="band"></div>
+        <div class="gutter" id="gutter" aria-hidden="true"></div>
+        <textarea id="qText" spellcheck="true" aria-label="Вопросы кроссворда, по одному на строку"></textarea>
+        <div class="mirror" id="mirror" aria-hidden="true"></div>
+      </div>
+      <div class="below"><button class="btn sm" type="button" id="clearQ">Очистить поле</button></div>
+    </div>
+  </section>
+
+  <section class="col">
+    <div class="panel out-panel">
+      <div class="ph"><span class="st">3</span><h2>JSON и валидация</h2><span class="meta" id="countInfo"></span></div>
+      <div class="checks" id="checks"></div>
+      <div class="codewrap"><pre class="code" id="json"></pre></div>
+      <div class="out-actions">
+        <button class="btn y" id="copyBtn">Скопировать JSON</button>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+const STORE='tj-crossword-builder-v5';
+const TAB='data';
+const AUTH={popupTitle:'',loginBtnLabel:'Войдите, чтобы посчитать',pointOfContact:'',isLoginRequired:false,popupDescription:''};
+const CP0={on:false,mask:'',promo:'',caption:'',solved:''};
+const BLANK={header:'',slug:'',sheetId:'',text:'',cp:{...CP0}};
+
+let S;
+try{const r=localStorage.getItem(STORE);S=r?{...BLANK,...JSON.parse(r)}:{...BLANK}}catch(e){S={...BLANK}}
+S.cp={...CP0,...(S.cp||{})};
+function save(){try{localStorage.setItem(STORE,JSON.stringify(S))}catch(e){}}
+
+const $=id=>document.getElementById(id);
+const toastEl=$('toast');let tt;
+function toast(msg,bad,action){toastEl.textContent=msg;toastEl.classList.toggle('err',!!bad);
+  if(action){const b=document.createElement('button');b.className='undo';b.type='button';b.textContent=action.label;b.onclick=()=>{toastEl.classList.remove('on');action.run()};toastEl.appendChild(b)}
+  toastEl.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove('on'),action?6000:2600)}
+function plural(n,a,b,c){const m10=n%10,m100=n%100;if(m10===1&&m100!==11)return a;if(m10>=2&&m10<=4&&(m100<10||m100>=20))return b;return c}
+
+/* parse text -> clues with their line index */
+const NUM_RE=/^\d{1,3}\s*[.)]?\s*/;
+function parse(text){
+  const lines=text.replace(/\r/g,'').split('\n');
+  const clues=[];let stopped=false;
+  lines.forEach((raw,i)=>{
+    if(stopped)return;
+    const l=raw.replace(/\u00a0/g,' ').replace(/\*+/g,'').trim();
+    if(!l)return;
+    if(/^по\s+(горизонтали|вертикали)\s*:?\s*$/i.test(l))return;
+    if(/^(слова|ответы)\s*:?\s*$/i.test(l)){stopped=true;return}
+    const t=l.replace(NUM_RE,'').replace(/\s+/g,' ').trim();
+    if(t)clues.push({line:i,text:t});
+  });
+  return {lines,clues};
+}
+function clueIssues(t){
+  const out=[];
+  const o=(t.match(/«/g)||[]).length,c=(t.match(/»/g)||[]).length;
+  if(o>c)out.push({lvl:'warn',msg:'не закрыта кавычка «»',fix:s=>s.replace(/\s+$/,'')+'»'});
+  else if(c>o)out.push({lvl:'warn',msg:'нет открывающей кавычки «»',fix:s=>s.replace(/^(\s*\d{1,3}\s*[.)]?\s*)?/,m=>(m||'')+'«')});
+  if(/ -{1,2} | – /.test(t))out.push({lvl:'warn',msg:'дефис вместо тире',fix:dash});
+  return out;
+}
+const dash=s=>s.replace(/ -{1,2} /g,' — ').replace(/ – /g,' — ');
+
+let P={lines:[],clues:[]};
+
+const maskLines=()=>{const pr=S.cp.promo.trim();return pr?pr.split(/\s+/).map(w=>'*'.repeat([...w].length)):[]};
+function buildCP(){
+  const o={mask:maskLines()};
+  const pr=S.cp.promo.trim();if(pr)o.promo=pr;
+  o.caption=S.cp.caption.trim();o.solvedCaption=S.cp.solved.trim();
+  return o;
+}
+function build(){
+  return {
+    auth:{...AUTH},
+    uiText:{header:S.header,introDesc:''},
+    ...(S.cp.on?{codePhrase:buildCP()}:{}),
+    crosswordName:S.slug,
+    wordsListData:P.clues.map(c=>({desc:c.text})),
+    googleSheetParams:{sheetId:S.sheetId,tabName:TAB}
+  };
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function highlight(json){
+  return esc(json).replace(/("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|([{}\[\],])/g,(m,str,colon,b,p)=>{
+    if(str)return colon?'<span class="k">'+str+'</span><span class="p">:</span>':'<span class="s">'+str+'</span>';
+    if(b)return '<span class="b">'+b+'</span>';
+    return '<span class="p">'+p+'</span>';
+  });
+}
+
+function allChecks(){
+  const L=[];
+  if(!S.header.trim())L.push({lvl:'err',text:'Нет заголовка',go:()=>focusField('f-header'),field:'f-header'});
+  if(!S.slug.trim())L.push({lvl:'err',text:'Нет слага',go:()=>focusField('f-slug'),field:'f-slug'});
+  else if(S.slug.includes('_'))L.push({lvl:'err',text:'В слаге нижнее подчеркивание, можно только дефис',field:'f-slug',go:()=>focusField('f-slug'),fix:()=>{S.slug=S.slug.replace(/_/g,'-');syncFields()}});
+  else if(!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(S.slug))L.push({lvl:'err',text:'Слаг — только латиница, цифры и дефисы',field:'f-slug',go:()=>focusField('f-slug'),fix:()=>{S.slug=S.slug.toLowerCase().trim().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-').replace(/^-|-$/g,'');syncFields()}});
+  const hn=(S.header.match(/№\s*(\d+)/)||[])[1],sn=(S.slug.match(/(\d+)$/)||[])[1];
+  if(hn&&sn&&hn!==sn)L.push({lvl:'warn',text:`Номер в заголовке (${hn}) не совпадает со слагом (${sn})`,go:()=>focusField('f-slug')});
+  if(!S.sheetId.trim())L.push({lvl:'err',text:'Нет ID фичерной таблицы',field:'f-sheet',go:()=>focusField('f-sheet')});
+  else{
+    const id=S.sheetId,e=t=>L.push({lvl:'err',text:t,field:'f-sheet',go:()=>focusField('f-sheet')});
+    if(/\s/.test(id))e('В ID таблицы есть пробелы');
+    else if(/[А-Яа-яЁё]/.test(id))e('В ID таблицы есть кириллица — ID состоит только из латиницы, цифр, - и _');
+    else if(/["'«»“”„`]/.test(id))e('В ID таблицы есть кавычки');
+    else if(!/^[A-Za-z0-9_-]+$/.test(id))e('В ID таблицы есть лишние символы — допустимы только латиница, цифры, - и _');
+    else if(id===S.slug.trim()||/^[a-z0-9]+(-[a-z0-9]+)+$/.test(id))e('Похоже на название таблицы, а не на её ID');
+    else if(id.length<15)e('ID таблицы слишком короткий');
+  }
+  if(S.cp.on){
+    const pr=S.cp.promo.trim();
+    if(!pr)L.push({lvl:'err',text:'Кодовое слово: нет промокода',field:'cp-promo',go:()=>focusField('cp-promo')});
+    if(pr&&/\s/.test(pr))L.push({lvl:'warn',text:'Кодовое слово: в промокоде есть пробелы — его будут копировать вместе с ними',go:()=>focusField('cp-promo')});
+    if(!S.cp.caption.trim())L.push({lvl:'err',text:'Кодовое слово: нет текста до разгадки',field:'cp-caption',go:()=>focusField('cp-caption')});
+    if(!S.cp.solved.trim())L.push({lvl:'err',text:'Кодовое слово: нет текста после разгадки',field:'cp-solved',go:()=>focusField('cp-solved')});
+  }
+  if(!P.clues.length)L.push({lvl:'err',text:'Нет ни одного вопроса',go:()=>$('qText').focus()});
+  P.clues.forEach((c,i)=>{
+    for(const is of clueIssues(c.text)){
+      L.push({lvl:is.lvl,text:`Вопрос ${i+1}: ${is.msg}`,go:()=>selectLine(c.line),
+        fix:()=>{const lines=S.text.split('\n');lines[c.line]=is.fix(lines[c.line]);setText(lines.join('\n'))}});
+    }
+  });
+  return L;
+}
+
+/* editor */
+const ta=$('qText'),gutter=$('gutter'),mirror=$('mirror');
+function grow(){ta.style.height='auto';ta.style.height=ta.scrollHeight+'px'}
+function renderGutter(){
+  mirror.innerHTML='';
+  const frag=document.createDocumentFragment();
+  P.lines.forEach(l=>{const d=document.createElement('div');d.textContent=l||'\u200b';frag.appendChild(d)});
+  mirror.appendChild(frag);
+  gutter.innerHTML='';
+  const rows=mirror.children;
+  P.clues.forEach((c,i)=>{
+    const r=rows[c.line];if(!r)return;
+    const s=document.createElement('span');s.textContent=i+1;s.style.top=(r.offsetTop+1)+'px';s.dataset.line=c.line;
+    const iss=clueIssues(c.text);if(iss.length)s.className=iss.some(x=>x.lvl==='err')?'err':'warn';
+    gutter.appendChild(s);
+  });
+  markCurrent();
+}
+function curLine(){return ta.value.slice(0,ta.selectionStart).split('\n').length-1}
+function markCurrent(){
+  const i=curLine(),r=mirror.children[i],band=$('band');
+  if(r){band.style.top=r.offsetTop+'px';band.style.height=r.offsetHeight+'px'}
+  gutter.querySelectorAll('span').forEach(s=>s.classList.toggle('cur',+s.dataset.line===i&&document.activeElement===ta));
+}
+['keyup','click','focus','blur','select'].forEach(ev=>ta.addEventListener(ev,()=>setTimeout(markCurrent,0)));
+function selectLine(i){
+  const lines=S.text.split('\n');let start=0;for(let k=0;k<i;k++)start+=lines[k].length+1;
+  ta.focus({preventScroll:true});ta.setSelectionRange(start,start+(lines[i]||'').length);
+  const r=mirror.children[i],ed=$('ed');if(r){ed.scrollIntoView({behavior:'smooth',block:'nearest'});ed.scrollTo({top:Math.max(0,r.offsetTop-ed.clientHeight/3),behavior:'smooth'})}
+}
+function focusField(id){const el=$(id);el.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>el.focus({preventScroll:true}),250)}
+function setText(v){S.text=v;const pos=ta.selectionStart;ta.value=v;try{ta.setSelectionRange(pos,pos)}catch(e){}update()}
+
+function renderChecks(L){
+  const box=$('checks');box.innerHTML='';
+  const errs=L.filter(x=>x.lvl==='err').length,warns=L.length-errs;
+  if(!L.length){
+    box.innerHTML='<div class="ck ok"><span class="d">✓</span><span>Все круто — можно копировать</span><span></span></div>';
+  }else{
+    L.forEach(c=>{
+      const d=document.createElement('div');d.className='ck '+c.lvl;
+      d.innerHTML='<span class="d">'+(c.lvl==='err'?'!':'?')+'</span><span></span><span></span>';
+      const t=d.children[1];t.textContent=c.text;
+      if(c.go){t.classList.add('go');t.onclick=c.go}
+      if(c.fix){const b=document.createElement('button');b.className='fix';b.textContent='Исправить';b.onclick=()=>{c.fix();update();toast('Исправлено')};d.children[2].appendChild(b)}
+      box.appendChild(d);
+    });
+  }
+  $('pill').className='status-pill'+(errs?' bad':warns?' meh':'');
+  $('pillText').textContent=errs?`${errs} ${plural(errs,'ошибка','ошибки','ошибок')}`:warns?`${warns} ${plural(warns,'замечание','замечания','замечаний')}`:'Готово';
+  $('copyBtn').textContent=errs?'Скопировать JSON с ошибками':'Скопировать JSON';
+  for(const id of ['f-header','f-slug','f-sheet','cp-promo','cp-caption','cp-solved'])$(id).classList.toggle('bad',L.some(x=>x.field===id));
+}
+
+let lastJson='';
+function update(){
+  P=parse(S.text);
+  grow();renderGutter();
+  renderChecks(allChecks());
+  lastJson=JSON.stringify(build(),null,2);
+  $('json').innerHTML=highlight(lastJson);
+  const n=P.clues.length;
+  $('countInfo').textContent=`${n} ${plural(n,'вопрос','вопроса','вопросов')}`;
+  save();
+}
+
+ta.addEventListener('input',()=>{S.text=ta.value;update()});
+new ResizeObserver(()=>{grow();renderGutter()}).observe(ta.parentElement);
+
+const bind=[['f-header','header'],['f-slug','slug']];
+function syncFields(){for(const [id,k] of bind)$(id).value=S[k];$('f-sheet').value=S.sheetId;ta.value=S.text;
+  $('cp-on').checked=S.cp.on;$('cp').classList.toggle('on',S.cp.on);
+  for(const [id,k] of cpBind)$(id).value=S.cp[k];
+  cpGrow();}
+const cpBind=[['cp-promo','promo'],['cp-caption','caption'],['cp-solved','solved']];
+function cpGrow(){for(const id of ['cp-caption','cp-solved']){const t=$(id);t.style.height='auto';t.style.height=(t.scrollHeight+2)+'px'}}
+for(const [id,k] of bind)$(id).addEventListener('input',e=>{S[k]=e.target.value;update()});
+$('f-slug').addEventListener('blur',e=>{const v=e.target.value.trim();if(v!==S.slug){S.slug=v;e.target.value=v;update()}});
+$('f-header').addEventListener('blur',e=>{const v=e.target.value.replace(/\s+/g,' ').trim();if(v!==S.header){S.header=v;e.target.value=v;update()}});
+$('f-sheet').addEventListener('input',e=>{
+  let v=e.target.value.trim();const m=v.match(/\/d\/([A-Za-z0-9_-]+)/);
+  if(m){v=m[1];e.target.value=v;$('sheetNote').textContent='ID извлечен из ссылки';setTimeout(()=>$('sheetNote').textContent='',2500)}
+  S.sheetId=v;update();
+});
+
+$('clearQ').onclick=()=>{
+  if(!S.text.trim()){toast('Поле и так пустое');ta.focus();return}
+  const prev=S.text,n=P.clues.length;
+  setText('');ta.focus();
+  toast(`${plural(n,'Удален','Удалено','Удалено')} ${n} ${plural(n,'вопрос','вопроса','вопросов')}`,false,{label:'Вернуть',run:()=>{setText(prev);toast('Вопросы возвращены')}});
+};
+
+for(const [id,k] of cpBind)$(id).addEventListener('input',e=>{S.cp[k]=e.target.value;cpGrow();update()});
+$('cp-promo').addEventListener('blur',e=>{const v=e.target.value.trim();if(v!==S.cp.promo){S.cp.promo=v;e.target.value=v;update()}});
+$('cp-on').addEventListener('change',e=>{S.cp.on=e.target.checked;$('cp').classList.toggle('on',S.cp.on);if(S.cp.on)requestAnimationFrame(cpGrow);update()});
+$('resetBtn').onclick=()=>{
+  const prev=JSON.parse(JSON.stringify(S));
+  S={...BLANK,cp:{...CP0}};syncFields();update();
+  toast('Все поля очищены',false,{label:'Вернуть',run:()=>{S=prev;syncFields();update();toast('Все поля возвращены')}});
+};
+
+$('copyBtn').onclick=async()=>{
+  const btn=$('copyBtn');const done=()=>{btn.classList.add('done');btn.textContent='Скопировано ✓';clearTimeout(btn._t);btn._t=setTimeout(()=>{btn.classList.remove('done');update()},1600)};
+  try{await navigator.clipboard.writeText(lastJson);done()}
+  catch(e){
+    const t=document.createElement('textarea');t.value=lastJson;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();
+    try{document.execCommand('copy');done()}catch(_){toast('Не получилось — выдели JSON вручную',true)}
+    t.remove();
+  }
+};
+
+syncFields();update();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{grow();renderGutter()});
+})();
+</script>
+</body>
+</html>
