@@ -147,6 +147,12 @@ button,input,textarea{font:inherit;color:inherit}
 .codewrap{position:relative;background:var(--bg);border-radius:12px;border:1px solid var(--line)}
 .code{margin:0;padding:16px 18px;font-family:var(--mono);font-size:12.5px;line-height:1.65;overflow:auto;max-height:56vh;white-space:pre;color:#c9ccd2}
 .code .k{color:#9cc0ff} .code .s{color:#ead98f} .code .b{color:#ffa283} .code .p{color:#5f646c}
+.code .inv{position:relative}
+.code .inv.nb{color:var(--accent);opacity:.75}
+.code .inv.wj,.code .inv.zw{display:inline-block;width:0;height:1em;vertical-align:-.15em;border-left:1.5px solid var(--accent);opacity:.7}
+.code .inv.zw{border-left:1.5px dashed #6fd08c}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)}
+.legend i{font-style:normal;color:var(--accent)}
 .out-actions{display:flex;gap:8px;margin-top:14px}
 .out-actions .btn.y{flex:1;height:50px;font-size:15.5px;border-radius:12px}
 .out-actions .btn.y.done{background:var(--ok);color:#06200f}
@@ -162,6 +168,34 @@ button,input,textarea{font:inherit;color:inherit}
 }
 .ed{height:460px}
 .ed{overflow:auto;grid-template-rows:minmax(100%,max-content)}
+.tabs{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px;margin-left:18px}
+.tabs button{border:0;background:transparent;color:var(--muted);height:32px;padding:0 14px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s,color .15s}
+.tabs button:hover{color:var(--text)}
+.tabs button[aria-selected="true"]{background:var(--panel-3);color:var(--text)}
+body[data-tab="check"] #pill,body[data-tab="check"] #resetBtn{display:none}
+[hidden]{display:none!important}
+.jin{display:block;width:100%;height:560px;resize:vertical;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.6;color:var(--text);white-space:pre;overflow:auto;transition:border-color .15s,box-shadow .15s;tab-size:2}
+.jin:hover{border-color:var(--line-2)}
+.jin:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.jact{display:flex;gap:8px;margin-top:14px}
+.jact .btn.y{flex:1;height:50px;font-size:15.5px;border-radius:12px}
+.jact .btn:not(.y){height:50px;border-radius:12px}
+.verdict{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:center;padding:16px;border-radius:12px;background:var(--bg);margin-bottom:12px}
+.verdict .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px;font-weight:700}
+.verdict b{display:block;font-size:17px;font-weight:700}
+.verdict small{display:block;color:var(--muted);font-size:13.5px;margin-top:2px}
+.verdict.ok .ic{background:var(--ok-soft);color:var(--ok)}
+.verdict.err .ic{background:var(--err-soft);color:var(--err)}
+.verdict.warn .ic{background:var(--warn-soft);color:var(--warn)}
+.verdict.idle .ic{background:var(--panel-2);color:var(--muted)}
+.jres{display:flex;flex-direction:column;gap:6px}
+.jres .ck{grid-template-columns:22px minmax(0,1fr)}
+.jres .ck>span:last-child{min-width:0}
+.jres .t{display:block}
+.jres .where{display:block;color:var(--muted);font-size:12px;margin-bottom:1px}
+.jres .snip{display:block;color:var(--dim);font-size:12.5px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.jres-scroll{flex:1;min-height:0;overflow:auto}
+@media (max-width:900px){.jin{height:50vh}.tabs{margin-left:0;order:3;width:100%}.tabs button{flex:1}}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);background:var(--panel-3);color:var(--text);border:1px solid var(--line-2);box-shadow:0 12px 32px rgba(0,0,0,.45);padding:11px 16px;border-radius:12px;font-weight:500;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10;max-width:calc(100% - 32px);text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .toast{display:flex;align-items:center;gap:14px}
@@ -178,12 +212,16 @@ button,input,textarea{font:inherit;color:inherit}
     <div class="logo-mark" aria-hidden="true"><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i></div>
     <h1>Генератор кроссвордов</h1>
   </div>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tb-gen" aria-selected="true" aria-controls="tab-gen">Генератор</button>
+    <button role="tab" id="tb-check" aria-selected="false" aria-controls="tab-check">Проверка JSON</button>
+  </div>
   <div class="sp"></div>
   <div class="status-pill" id="pill"><b></b><span id="pillText">…</span></div>
   <button class="btn ghost" id="resetBtn">Начать заново</button>
 </header>
 
-<main class="app">
+<main class="app" id="tab-gen" role="tabpanel">
   <section class="col">
     <div class="panel">
       <div class="ph"><span class="st">1</span><h2>Основное</h2></div>
@@ -236,11 +274,256 @@ button,input,textarea{font:inherit;color:inherit}
     </div>
   </section>
 </main>
+
+<main class="app" id="tab-check" role="tabpanel" hidden>
+  <section class="col">
+    <div class="panel">
+      <div class="ph"><span class="st">1</span><h2>Готовый JSON</h2></div>
+      <p class="sub">Вставь конфиг кроссворда целиком и нажми «Проверить»</p>
+      <textarea class="jin" id="jIn" spellcheck="false" aria-label="JSON для проверки"></textarea>
+      <div class="jact">
+        <button class="btn y" id="jCheck">Проверить</button>
+        <button class="btn" id="jClear">Очистить</button>
+      </div>
+    </div>
+  </section>
+  <section class="col">
+    <div class="panel out-panel">
+      <div class="ph"><span class="st">2</span><h2>Результат</h2><span class="meta" id="jMeta"></span></div>
+      <div class="verdict idle" id="jVerdict"><span class="ic">?</span><span><b>Пока нечего проверять</b><small>Результат появится после нажатия «Проверить»</small></span></div>
+      <div class="jres-scroll"><div class="jres" id="jRes"></div></div>
+    </div>
+  </section>
+</main>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
+/* ===== Типограф Т—Ж (questTypography.js) ===== */
+/*
+ * Невидимые символы, на которых держится вся типографика:
+ *   U+00A0 — неразрывный пробел (не разрывать перенос строки на пробеле)
+ *   U+2060 — «склеивающий» символ (word joiner): запрещает перенос
+ *            строки в этом месте, но сам ничего не отображает
+ *   U+200B — нулевой пробел: разрешает перенос строки там, где обычно
+ *            переноса нет (используется в formatParticles)
+ */
+const QUEST_WORD_JOINER = '\u2060';
+const QUEST_NBSP = '\u00A0';
+const QUEST_ZERO_WIDTH_SPACE = '\u200B';
+
+class QuestTypography {
+
+  /**
+   * Применяет все правила к фрагменту обычного текста.
+   * Не вызывайте её для URL и разметки — только для текста.
+   *
+   * @param {string} value
+   * @return {string}
+   */
+  static format(value) {
+    let result = String(value === null || value === undefined ? '' : value);
+
+    if (!result) {
+      return result;
+    }
+
+    /* Сначала «отклеиваем» всё, что было приклеено раньше (нами или
+       редактором), затем клеим заново по правилам: результат всегда
+       одинаков, сколько бы раз текст ни прогоняли. */
+    result = QuestTypography.unglue(result);
+    result = QuestTypography.formatNumericRanges(result);
+    result = QuestTypography.formatCodes(result);
+    result = QuestTypography.formatMeasurementUnits(result);
+    result = QuestTypography.formatShortHyphenatedWords(result);
+    result = QuestTypography.formatBrandName(result);
+    result = QuestTypography.formatParticles(result);
+
+    return result;
+  }
+
+  /**
+   * Убирает «склеивающие» символы (U+2060). Неразрывные пробелы и
+   * нулевые пробелы не трогает: их правила защищены от повторного
+   * применения отдельно.
+   */
+  static unglue(value) {
+    return String(value).replace(new RegExp(QUEST_WORD_JOINER, 'g'), '');
+  }
+
+  /**
+   * Номера документов, бланков, кодов и другие «слова» из букв и цифр,
+   * склеенные дефисом или слешем, не переносятся по частям:
+   * 148-1/у-04(л), 107/у-НП, 3867-р, 25-1/11441, 12-03-2024.
+   * Вместо тега <nobr> клеим невидимым символом U+2060.
+   *
+   * После «№» ставится неразрывный пробел, чтобы номер не оставался
+   * в конце строки отдельно от знака.
+   */
+  static formatCodes(value) {
+    const glue = QUEST_WORD_JOINER;
+
+    return String(value)
+      .replace(
+        /(?<![\p{L}\p{N}])[\p{L}\p{N}()]+(?:[-/][\p{L}\p{N}()]+)+/gu,
+        token => (
+          /\d/.test(token)
+            ? token.replace(/([-/])/g, `${glue}$1${glue}`)
+            : token
+        )
+      )
+      .replace(/№[ \t]+(?=[\p{L}\p{N}])/gu, `№${QUEST_NBSP}`);
+  }
+
+  /**
+   * Диапазоны чисел: 30-39 → 30\u2060—\u206039, 5–10 → 5\u2060–\u206010.
+   *
+   * Тип тире НЕ меняем — только приклеиваем невидимой склейкой то тире,
+   * которое уже стоит в доке. По ручным тестам на проде разные диапазоны
+   * оформлены по-разному («3\u2060—\u20606 месяцев» — длинным тире, «5\u2060–\u206010 лет»,
+   * «13\u2060–\u206015%» — коротким): единого правила нет, это, похоже, зависит от
+   * того, как диапазон набирали в Google Docs (с пробелами вокруг дефиса
+   * автозамена даёт длинное тире, вплотную между цифрами — короткое).
+   * Раньше здесь всё приводилось к длинному тире принудительно — это
+   * ломало диапазоны, набранные коротким.
+   *
+   * Числа, которые примыкают к буквам, слешам или другим дефисам
+   * (148-1/у-04, 12-03-2024), диапазонами не считаются.
+   */
+  static formatNumericRanges(value) {
+    return String(value)
+      .replace(
+        /(?<![\w/\-–—])(\d+)[ \t]*([-–—])[ \t]*(\d+)(?![\w/\-–—])/g,
+        (match, a, dash, b) => `${a}${QUEST_WORD_JOINER}${dash}${QUEST_WORD_JOINER}${b}`
+      )
+      /* Диапазоны кодов МКБ: F03—F09, N30-N32, E10.0—E10.9 — тот же принцип: тире не меняем */
+      .replace(
+        /(?<![\w/\-–—])([A-Z]\d{1,3}(?:\.\d+)?)[ \t]*([-–—])[ \t]*([A-Z]\d{1,3}(?:\.\d+)?)(?![\w/\-–—])/g,
+        (match, a, dash, b) => `${a}${QUEST_WORD_JOINER}${dash}${QUEST_WORD_JOINER}${b}`
+      );
+  }
+
+  /**
+   * Единицы измерения, валюты, проценты, годы.
+   * 80 м² → 80 м², 15 % → 15 %, 2026 г. → 2026 г.
+   */
+  static formatMeasurementUnits(value) {
+    const units = [
+      'кВт[·⋅]?ч', 'кВт', 'МВт', 'Вт',
+      'км²', 'дм²', 'см²', 'мм²', 'м²',
+      'км³', 'дм³', 'см³', 'мм³', 'м³',
+      'км', 'дм', 'см', 'мм', 'м',
+      'мг', 'кг', 'г', 'т',
+      'мкл', 'мл', 'дл', 'л',
+      'га'
+    ].join('|');
+
+    const boundary = '(?=[\\s.,!?;:)]|$)';
+
+    /*
+     * Во всех правилах ниже пробел между числом и единицей только
+     * «склеивается» (заменяется неразрывным). Если пробела нет
+     * («30%», «500₽»), текст остаётся как есть: в референсных квестах
+     * проценты пишутся слитно, и добавлять пробел мы не должны.
+     */
+    let result = String(value);
+
+    result = result.replace(
+      new RegExp(`(\\d)[ \\t\\u00A0]+(${units})${boundary}`, 'gi'),
+      `$1${QUEST_NBSP}$2`
+    );
+
+    result = result.replace(
+      /(\d)[ \t\u00A0]+%/g,
+      `$1${QUEST_NBSP}%`
+    );
+
+    result = result.replace(
+      /(\d)[ \t\u00A0]*°[ \t\u00A0]*([CС])/g,
+      `$1${QUEST_NBSP}°$2`
+    );
+
+    result = result.replace(
+      /(\d)[ \t\u00A0]+(₽|\$|€|£|¥)/g,
+      `$1${QUEST_NBSP}$2`
+    );
+
+    result = result.replace(
+      new RegExp(`(\\d)[ \\t\\u00A0]+(руб\\.?|долл\\.?|евро)${boundary}`, 'gi'),
+      `$1${QUEST_NBSP}$2`
+    );
+
+    result = result.replace(
+      new RegExp(`\\b((?:19|20)\\d{2})[ \\t\\u00A0]+г\\.${boundary}`, 'g'),
+      `$1${QUEST_NBSP}г.`
+    );
+
+    result = result.replace(
+      new RegExp(
+        `(\\d)[ \\t\\u00A0]+(год|года|году|годом|годы|годах|лет)${boundary}`,
+        'gi'
+      ),
+      `$1${QUEST_NBSP}$2`
+    );
+
+    return result;
+  }
+
+  /**
+   * Короткие слова через дефис не переносятся:
+   * из-за, какое-то, 3867-р.
+   */
+  static formatShortHyphenatedWords(value) {
+    const letters = 'А-ЯЁа-яёA-Za-z0-9';
+
+    const pattern = new RegExp(
+      `(^|[^${letters}-])([${letters}]+)-([${letters}]+)([ \\t\\u00A0]+|(?=$|[^${letters}-]))`,
+      'g'
+    );
+
+    return String(value).replace(
+      pattern,
+      (match, prefix, firstPart, secondPart, whitespace) => {
+        const hasShortPart = firstPart.length <= 4 || secondPart.length <= 4;
+
+        if (!hasShortPart) {
+          return match;
+        }
+
+        const glued = firstPart + QUEST_WORD_JOINER + '-' + QUEST_WORD_JOINER + secondPart;
+
+        return prefix + glued + (whitespace ? ' ' : '');
+      }
+    );
+  }
+
+  /** Т—Ж: бренд не разрывается. */
+  static formatBrandName(value) {
+    return String(value).replace(
+      /Т\u2060?—\u2060?Ж/g,
+      `Т${QUEST_WORD_JOINER}—${QUEST_WORD_JOINER}Ж`
+    );
+  }
+
+  /**
+   * Частицы «же», «ли», «бы» не отрываются от предыдущего слова,
+   * а после них разрешён перенос строки.
+   */
+  static formatParticles(value) {
+    return String(value)
+      .replace(
+        /([А-ЯЁа-яёA-Za-z]+)[ \t ]+(же|ли|бы)[ \t ]+(?!\u200B)/gi,
+        `$1${QUEST_NBSP}$2 ${QUEST_ZERO_WIDTH_SPACE}`
+      )
+      .replace(
+        /([А-ЯЁа-яёA-Za-z]+)[ \t ]+(же|ли|бы)(?=[.,!?;:]|$)/gi,
+        `$1${QUEST_NBSP}$2`
+      );
+  }
+}
+/* ===== /типограф ===== */
+
 (function(){
 const STORE='tj-crossword-builder-v5';
 const TAB='data';
@@ -298,10 +581,10 @@ function buildCP(){
 function build(){
   return {
     auth:{...AUTH},
-    uiText:{header:S.header,introDesc:''},
+    uiText:{header:QuestTypography.format(S.header),introDesc:''},
     ...(S.cp.on?{codePhrase:buildCP()}:{}),
     crosswordName:S.slug,
-    wordsListData:P.clues.map(c=>({desc:c.text})),
+    wordsListData:P.clues.map(c=>({desc:QuestTypography.format(c.text)})),
     googleSheetParams:{sheetId:S.sheetId,tabName:TAB}
   };
 }
@@ -311,7 +594,7 @@ function highlight(json){
     if(str)return colon?'<span class="k">'+str+'</span><span class="p">:</span>':'<span class="s">'+str+'</span>';
     if(b)return '<span class="b">'+b+'</span>';
     return '<span class="p">'+p+'</span>';
-  });
+  }).replace(/\u00A0/g,'<span class="inv nb" title="Неразрывный пробел">·</span>').replace(/\u2060/g,'<span class="inv wj" title="Склейка"></span>').replace(/\u200B/g,'<span class="inv zw" title="Место для переноса"></span>');
 }
 
 function allChecks(){
@@ -463,6 +746,199 @@ $('copyBtn').onclick=async()=>{
 if(document.fonts&&document.fonts.load){['400','500','600','700'].forEach(w=>document.fonts.load(w+' 15px Onest','Ая')); document.fonts.load('400 13px "JetBrains Mono"','Ая')}
 syncFields();update();
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{grow();renderGutter()});
+})();
+</script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const plural=(n,a,b,c)=>{const m10=n%10,m100=n%100;if(m10===1&&m100!==11)return a;if(m10>=2&&m10<=4&&(m100<10||m100>=20))return b;return c};
+const TOP=['auth','uiText','codePhrase','crosswordName','wordsListData','googleSheetParams'];
+const AUTH_KEYS={popupTitle:'string',loginBtnLabel:'string',pointOfContact:'string',isLoginRequired:'boolean',popupDescription:'string'};
+const isObj=v=>v&&typeof v==='object'&&!Array.isArray(v);
+const snip=s=>String(s).replace(/\u2060/g,'').replace(/\u00A0/g,' ').replace(/\u200B/g,'');
+
+/* ---------- tabs ---------- */
+function setTab(t){
+  const chk=t==='check';
+  $('tab-gen').hidden=chk;$('tab-check').hidden=!chk;
+  $('tb-gen').setAttribute('aria-selected',String(!chk));$('tb-check').setAttribute('aria-selected',String(chk));
+  document.body.dataset.tab=chk?'check':'gen';
+  /* адрес с #check нужен только на GitHub Pages; внутри превью в чате history недоступен — там просто пропускаем */
+  try{if(location.hash!==(chk?'#check':''))history.replaceState(null,'',chk?'#check':location.pathname+location.search)}catch(e){}
+  if(chk)setTimeout(()=>$('jIn').focus(),0);
+}
+$('tb-gen').onclick=()=>setTab('gen');$('tb-check').onclick=()=>setTab('check');
+setTab(location.hash==='#check'?'check':'gen');
+
+/* ---------- parse with a human error ---------- */
+function parse(raw){
+  const txt=raw.replace(/^\uFEFF/,'');
+  try{return {data:JSON.parse(txt)}}
+  catch(e){
+    let pos=null;const m=String(e.message).match(/position (\d+)/i);
+    if(m)pos=+m[1];
+    else{const lc=String(e.message).match(/line (\d+) column (\d+)/i);if(lc){const lines=txt.split('\n');pos=0;for(let i=0;i<+lc[1]-1;i++)pos+=lines[i].length+1;pos+=+lc[2]-1}}
+    let where='';
+    if(pos!==null){const before=txt.slice(0,pos).split('\n');where=`строка ${before.length}, символ ${before[before.length-1].length+1}`}
+    let hint='JSON не читается — где-то сломан синтаксис';
+    const t=txt.trim();
+    if(/[“”„]/.test(txt))hint='В JSON есть «умные» кавычки “ ” — вокруг ключей и значений нужны прямые "';
+    else if(/,\s*[}\]]/.test(txt))hint='Лишняя запятая перед закрывающей скобкой';
+    else if(!t.startsWith('{'))hint='Похоже, вставлен кусок конфига, а не весь JSON — он должен начинаться с {';
+    else if(!t.endsWith('}'))hint='JSON обрывается — похоже, скопирован не до конца';
+    return {error:hint,where};
+  }
+}
+
+/* ---------- rules ---------- */
+function typoOk(s){const n=String(s).replace(/\u2060+/g,'\u2060');return typeof QuestTypography==='undefined'||QuestTypography.format(n)===n}
+function textIssues(s){
+  const out=[];const t=String(s);
+  const o=(t.match(/«/g)||[]).length,c=(t.match(/»/g)||[]).length;
+  if(o>c)out.push(['err','не закрыта кавычка «»']);else if(c>o)out.push(['err','нет открывающей кавычки «»']);
+  if(/["“”„]/.test(t))out.push(['warn','есть прямая кавычка "']);
+  if(/ -{1,2} | – /.test(t))out.push(['warn','дефис вместо тире']);
+  if(/^\s|\s$/.test(t.replace(/[\u2060\u200B]/g,'')))out.push(['warn','пробел в начале или в конце']);
+  if(/ {2,}/.test(t))out.push(['warn','двойной пробел']);
+  if(/\n/.test(t))out.push(['warn','перенос строки внутри текста']);
+  return out;
+}
+function validate(d){
+  const L=[];const add=(lvl,where,text,s)=>L.push({lvl,where,text,s});
+  if(!isObj(d)){add('err','Структура','Конфиг должен быть объектом в фигурных скобках { }');return L}
+  for(const k of Object.keys(d))if(!TOP.includes(k))add('warn','Структура',`Неизвестный ключ «${k}» — такого в конфиге кроссворда нет`);
+  for(const k of TOP)if(k!=='codePhrase'&&!(k in d))add('err','Структура',`Нет блока «${k}»`);
+
+  // auth
+  if('auth' in d){
+    if(!isObj(d.auth))add('err','Авторизация','«auth» должен быть объектом');
+    else for(const [k,t] of Object.entries(AUTH_KEYS)){
+      if(!(k in d.auth))add('err','Авторизация',`Нет поля «${k}»`);
+      else if(typeof d.auth[k]!==t)add('err','Авторизация',`«${k}» должен быть ${t==='boolean'?'true или false без кавычек':'строкой'}`);
+    }
+  }
+  // uiText
+  let header='';
+  if('uiText' in d){
+    if(!isObj(d.uiText))add('err','Заголовок','«uiText» должен быть объектом');
+    else{
+      header=d.uiText.header;
+      if(typeof header!=='string'||!header.trim())add('err','Заголовок','Нет заголовка');
+      else{
+        for(const [l,t] of textIssues(header))add(l,'Заголовок',t[0].toUpperCase()+t.slice(1),header);
+        if(!typoOk(header))add('warn','Заголовок','Не прогнан через типограф — неразрывные пробелы и склейки стоят не везде',header);
+      }
+      if(!('introDesc' in d.uiText))add('err','Заголовок','Нет поля «introDesc» — оно должно быть, хотя бы пустым');
+      else if(typeof d.uiText.introDesc!=='string')add('err','Заголовок','«introDesc» должен быть строкой');
+    }
+  }
+  // slug
+  const slug=d.crosswordName;
+  if('crosswordName' in d){
+    if(typeof slug!=='string'||!slug.trim())add('err','Слаг','Нет слага');
+    else if(slug.includes('_'))add('err','Слаг','В слаге нижнее подчеркивание, можно только дефис',slug);
+    else if(!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug))add('err','Слаг','Слаг — только латиница, цифры и дефисы',slug);
+    if(typeof slug==='string'&&typeof header==='string'){
+      const hn=(header.match(/№[\s\u00A0]*(\d+)/)||[])[1],sn=(slug.match(/(\d+)$/)||[])[1];
+      if(hn&&sn&&hn!==sn)add('warn','Слаг',`Номер в заголовке (${hn}) не совпадает со слагом (${sn})`);
+      const miniH=/^Мини/i.test(header.trim()),miniS=/^mini-/.test(slug);
+      if(header.trim()&&miniH!==miniS)add('warn','Слаг',miniH?'В заголовке «Мини-кроссворд», а слаг без mini-':'Слаг с mini-, а в заголовке не «Мини-кроссворд»');
+    }
+  }
+  // questions
+  if('wordsListData' in d){
+    const w=d.wordsListData;
+    if(!Array.isArray(w))add('err','Вопросы','«wordsListData» должен быть списком в квадратных скобках [ ]');
+    else if(!w.length)add('err','Вопросы','Нет ни одного вопроса');
+    else{
+      const seen=new Map();
+      w.forEach((it,i)=>{
+        const where=`Вопрос ${i+1}`;
+        if(!isObj(it)){add('err',where,'Должен быть объектом вида { "desc": "…" }');return}
+        for(const k of Object.keys(it))if(k!=='desc')add('warn',where,`Лишнее поле «${k}»`);
+        const s=it.desc;
+        if(typeof s!=='string'){add('err',where,'Нет поля «desc» или оно не строка');return}
+        if(!s.trim()){add('err',where,'Пустой вопрос');return}
+        for(const [l,t] of textIssues(s))add(l,where,t[0].toUpperCase()+t.slice(1),s);
+        if(/^\d{1,3}[.)]?\s/.test(s))add('warn',where,'В начале остался номер вопроса',s);
+        if(!typoOk(s))add('warn',where,'Не прогнан через типограф — неразрывные пробелы и склейки стоят не везде',s);
+        const key=snip(s).trim().toLowerCase();
+        if(seen.has(key))add('warn',where,`Повторяет вопрос ${seen.get(key)+1}`,s);else seen.set(key,i);
+      });
+    }
+  }
+  // sheet
+  if('googleSheetParams' in d){
+    const g=d.googleSheetParams;
+    if(!isObj(g))add('err','Таблица','«googleSheetParams» должен быть объектом');
+    else{
+      const id=g.sheetId;
+      if(typeof id!=='string'||!id.trim())add('err','Таблица','Нет ID фичерной таблицы');
+      else if(/\s/.test(id))add('err','Таблица','В ID таблицы есть пробелы',id);
+      else if(/[А-Яа-яЁё]/.test(id))add('err','Таблица','В ID таблицы есть кириллица — ID состоит только из латиницы, цифр, - и _',id);
+      else if(/["'«»“”„`]/.test(id))add('err','Таблица','В ID таблицы есть кавычки',id);
+      else if(!/^[A-Za-z0-9_-]+$/.test(id))add('err','Таблица','В ID таблицы есть лишние символы — допустимы только латиница, цифры, - и _',id);
+      else if(id===slug||/^[a-z0-9]+(-[a-z0-9]+)+$/.test(id))add('err','Таблица','Похоже на название таблицы, а не на ее ID',id);
+      else if(id.length<15)add('err','Таблица','ID таблицы слишком короткий',id);
+      if(g.tabName!=='data')add('err','Таблица',`Вкладка должна называться «data», а тут ${g.tabName===undefined?'ее нет':'«'+g.tabName+'»'}`);
+    }
+  }
+  // code phrase
+  if('codePhrase' in d){
+    const c=d.codePhrase,W='Кодовое слово';
+    if(!isObj(c))add('err',W,'«codePhrase» должен быть объектом');
+    else{
+      for(const k of Object.keys(c))if(!['mask','promo','caption','solvedCaption'].includes(k))add('warn',W,`Неизвестное поле «${k}»`);
+      const m=c.mask,lines=typeof m==='string'?[m]:m;
+      let stars=0;
+      if(!Array.isArray(lines)||!lines.length||lines.some(x=>typeof x!=='string'))add('err',W,'«mask» должен быть списком строк, например ["*****"]');
+      else{stars=lines.join('').split('*').length-1;if(!stars)add('err',W,'В маске нет ни одной *')}
+      if('promo' in c){
+        if(typeof c.promo!=='string'||!c.promo.trim())add('err',W,'Промокод пустой');
+        else{
+          const n=[...c.promo.replace(/\s/g,'')].length;
+          if(stars&&n!==stars)add('err',W,`В маске ${stars} ${plural(stars,'звездочка','звездочки','звездочек')}, а в промокоде ${n} ${plural(n,'символ','символа','символов')}`,c.promo);
+          if(/\s/.test(c.promo))add('warn',W,'В промокоде есть пробелы — его будут копировать вместе с ними',c.promo);
+        }
+      }
+      if(typeof c.caption!=='string'||!c.caption.trim())add('err',W,'Нет текста до разгадки (caption)');
+      if(typeof c.solvedCaption!=='string'||!c.solvedCaption.trim())add('err',W,'Нет текста после разгадки (solvedCaption)');
+    }
+  }
+  return L;
+}
+
+/* ---------- render ---------- */
+function verdict(cls,icon,title,sub){
+  const v=$('jVerdict');v.className='verdict '+cls;v.innerHTML='<span class="ic"></span><span><b></b><small></small></span>';
+  v.querySelector('.ic').textContent=icon;v.querySelector('b').textContent=title;v.querySelector('small').textContent=sub||'';
+}
+function run(){
+  const raw=$('jIn').value,box=$('jRes');box.innerHTML='';$('jMeta').textContent='';
+  if(!raw.trim()){verdict('idle','?','Пока нечего проверять','Вставь JSON в поле слева');return}
+  const r=parse(raw);
+  if(r.error){verdict('err','!','JSON не читается',r.where?'Ошибка примерно здесь: '+r.where:'');addItem('err','Синтаксис',r.error);return}
+  const L=validate(r.data);
+  const e=L.filter(x=>x.lvl==='err').length,w=L.length-e;
+  const n=Array.isArray(r.data.wordsListData)?r.data.wordsListData.length:0;
+  $('jMeta').textContent=n?`${n} ${plural(n,'вопрос','вопроса','вопросов')}`:'';
+  if(!L.length){verdict('ok','✓','Все круто!','Ошибок нет, конфиг можно публиковать');return}
+  if(e)verdict('err','!',`${e} ${plural(e,'ошибка','ошибки','ошибок')}`+(w?` и ${w} ${plural(w,'замечание','замечания','замечаний')}`:''),'Ошибки нужно исправить до публикации');
+  else verdict('warn','?',`${w} ${plural(w,'замечание','замечания','замечаний')}`,'Ошибок нет, но стоит проверить глазами');
+  [...L.filter(x=>x.lvl==='err'),...L.filter(x=>x.lvl==='warn')].forEach(x=>addItem(x.lvl,x.where,x.text,x.s));
+}
+function addItem(lvl,where,text,s){
+  const d=document.createElement('div');d.className='ck '+lvl;
+  d.innerHTML='<span class="d"></span><span><span class="where"></span><span class="t"></span><span class="snip"></span></span>';
+  d.querySelector('.d').textContent=lvl==='err'?'!':'?';
+  d.querySelector('.where').textContent=where;d.querySelector('.t').textContent=text;
+  const sn=d.querySelector('.snip');if(s)sn.textContent=snip(s);else sn.remove();
+  $('jRes').appendChild(d);
+}
+$('jCheck').onclick=run;
+$('jIn').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();run()}});
+$('jIn').addEventListener('paste',()=>setTimeout(run,0));
+$('jClear').onclick=()=>{$('jIn').value='';run();$('jIn').focus()};
 })();
 </script>
 </body>
